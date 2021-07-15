@@ -49,6 +49,33 @@ func (h *Handler) GetAccount(c echo.Context) error {
 	return c.JSON(http.StatusOK, accounts)
 }
 
+func (h *Handler) GetEmp(c echo.Context) error {
+	type Req struct {
+		EmpCode int
+	}
+	req := new(model.EmpReq)
+	if err := c.Bind(req); err != nil {
+		return err
+	}
+	fmt.Println(req.EmpCode)
+
+	var employee []model.Emp
+	rows, err := h.db.Raw("EXEC GetEmp @EmpCode = ?", req.EmpCode).Rows()
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, err.Error())
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var item model.Emp
+		err = rows.Scan(&item.EmpName, &item.EmpPassword, &item.EmpCode)
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, err.Error())
+		}
+		employee = append(employee, item)
+	}
+
+	return c.JSON(http.StatusOK, employee[0])
+}
 func (h *Handler) GetItem(c echo.Context) error {
 
 	req := new(model.GetItemRequest)
