@@ -7,8 +7,15 @@ import (
 func (h *Handler) Register(v1 *echo.Group) {
 	v1.GET("/stores", h.GetStores)
 	v1.GET("/account", h.GetAccount)
+	v1.GET("/employee", h.GetEmp)
+	//item
+
 	v1.GET("/items", h.GetItems)
 	v1.GET("/item", h.GetItem)
-	v1.GET("/employee", h.GetEmp)
+	v1.PUT("/item/update", h.UpdateItem)
+
+	// order
+	v1.POST("/orders", h.InsertOrder)
+	v1.POST("/orders/item", h.InsertOrderItem)
 
 }
