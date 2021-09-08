@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"hand_held/model"
 	"net/http"
+	"time"
 
 	"github.com/labstack/echo/v4"
 )
@@ -47,34 +48,6 @@ func (h *Handler) GetAccount(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, accounts)
-}
-
-func (h *Handler) GetEmp(c echo.Context) error {
-	type Req struct {
-		EmpCode int
-	}
-	req := new(model.EmpReq)
-	if err := c.Bind(req); err != nil {
-		return err
-	}
-	fmt.Println(req.EmpCode)
-
-	var employee []model.Emp
-	rows, err := h.db.Raw("EXEC GetEmp @EmpCode = ?", req.EmpCode).Rows()
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, err.Error())
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var item model.Emp
-		err = rows.Scan(&item.EmpName, &item.EmpPassword, &item.EmpCode)
-		if err != nil {
-			return c.JSON(http.StatusInternalServerError, err.Error())
-		}
-		employee = append(employee, item)
-	}
-
-	return c.JSON(http.StatusOK, employee[0])
 }
 
 func (h *Handler) InsertOrder(c echo.Context) error {
@@ -263,6 +236,8 @@ func (h *Handler) UpdateItem(c echo.Context) error {
 
 func (h *Handler) ListOrders(c echo.Context) error {
 	rows, err := h.db.Raw("EXEC ListTr05").Rows()
+	id := c.Get("user")
+
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
@@ -277,7 +252,7 @@ func (h *Handler) ListOrders(c echo.Context) error {
 		orders = append(orders, order)
 	}
 
-	return c.JSON(http.StatusOK, orders)
+	return c.JSON(http.StatusOK, id)
 }
 
 func (h *Handler) UpdateOrderItem(c echo.Context) error {
@@ -346,4 +321,43 @@ func (h *Handler) DeleteOrderItem(c echo.Context) error {
 		}
 	}
 	return c.JSON(http.StatusOK, item)
+}
+
+func (h *Handler) Login(c echo.Context) error {
+	req := new(model.LoginReq)
+	if err := c.Bind(req); err != nil {
+		return err
+	}
+	fmt.Println(req.EmpCode)
+
+	var employee model.Emp
+	rows, err := h.db.Raw("EXEC GetEmp @EmpCode = ?", req.EmpCode).Rows()
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, err.Error())
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var item model.Emp
+		err = rows.Scan(&item.EmpName, &item.EmpPassword, &item.EmpCode)
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, err.Error())
+		}
+		employee = item
+	}
+
+	if employee.EmpPassword != req.EmpPassword {
+		return c.JSON(http.StatusInternalServerError, "incorrect password")
+
+	}
+
+	accessToken, err := h.tokenMaker.CreateToken(
+		req.EmpCode,
+		time.Duration(999999999999999999),
+	)
+
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, err.Error())
+	}
+
+	return c.JSON(http.StatusOK, accessToken)
 }

@@ -1,22 +1,27 @@
 package handler
 
 import (
+	"hand_held/config"
+	"hand_held/router/middleware"
+
 	"github.com/labstack/echo/v4"
 )
 
 func (h *Handler) Register(v1 *echo.Group) {
+	jwtMiddleware := middleware.JWT(config.Config("JWT_SECRET"))
 	v1.GET("/stores", h.GetStores)
 	v1.GET("/account", h.GetAccount)
-	v1.GET("/employee", h.GetEmp)
-	//item
 
+	v1.POST("/login", h.Login)
+	auth := v1.Group("/", jwtMiddleware)
+	//item
 	v1.GET("/items", h.GetItems)
 	v1.GET("/item", h.GetItem)
 	v1.PUT("/item/update", h.UpdateItem)
 
 	// order
-	v1.GET("/orders", h.ListOrders)
-	v1.POST("/orders", h.InsertOrder)
+	auth.GET("orders", h.ListOrders)
+	auth.POST("/orders", h.InsertOrder)
 	v1.GET("/orders/no", h.GetSalesOrderDocNo)
 	v1.POST("/orders/close", h.CloseOrder)
 	v1.POST("/orders/item", h.InsertOrderItem)
