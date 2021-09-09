@@ -1,21 +1,24 @@
 package model
 
 type Order struct {
-	DocNo     int
-	DocDate   string
-	EmpCode   int
-	TotalCash float64
-	EmpName   string
+	Serial         int
+	DocNo          int
+	DocDate        string
+	EmpCode        int
+	TotalCash      float64
+	EmpName        string
+	CustomerName   string
+	CustomerCode   int
+	CustomerSerial int
 }
 type OrderTotals struct {
 	TotalCash     float64
-	TotalPackages int
+	TotalPackages float64
 }
 
 type InsertOrder struct {
 	DocNo         int
 	StoreCode     int
-	EmpCode       int
 	AccountSerial int
 }
 
@@ -24,17 +27,19 @@ type GetOrderItemsRequest struct {
 }
 
 type OrderItem struct {
-	Serial   int
-	BarCode  int
-	ItemName string
-	Qnt      float64
-	Price    float64
-	Total    float64
+	Serial        int
+	BarCode       int
+	ItemName      string
+	Qnt           float64
+	Price         float64
+	Total         float64
+	QntAntherUnit float64
 }
 
 type InsertOrderItem struct {
-	HeadSerial int
-	ItemSerial int
-	Qnt        float64
-	Price      float64
+	HeadSerial    int
+	ItemSerial    int
+	Qnt           float64
+	Price         float64
+	QntAntherUnit float64
 }

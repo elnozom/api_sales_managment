@@ -51,12 +51,23 @@ func (h *Handler) GetAccount(c echo.Context) error {
 }
 
 func (h *Handler) InsertOrder(c echo.Context) error {
-
+	code := c.Get("empCode")
 	req := new(model.InsertOrder)
 	if err := c.Bind(req); err != nil {
 		return err
 	}
-	rows, err := h.db.Raw("EXEC InsertTr05 @DocNo = ?, @StoreCode = ? , @EmpCode = ? , @AccountSerial =? ", req.DocNo, req.StoreCode, req.EmpCode, req.AccountSerial).Rows()
+	orderNoRows, err := h.db.Raw("EXEC GetSalesOrderDocNo @StoreCode = ?, @TrSerial = ?", req.StoreCode, 30).Rows()
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, err.Error())
+	}
+	var orderNo int32
+	for orderNoRows.Next() {
+		orderNoRows.Scan(&orderNo)
+	}
+	orderNo = orderNo + 1
+	fmt.Println(orderNo)
+
+	rows, err := h.db.Raw("EXEC InsertTr05 @DocNo = ?, @StoreCode = ? , @EmpCode = ? , @AccountSerial =? ", orderNo, req.StoreCode, code, req.AccountSerial).Rows()
 	defer rows.Close()
 	var serial int
 	for rows.Next() {
@@ -77,7 +88,7 @@ func (h *Handler) InsertOrderItem(c echo.Context) error {
 	if err := c.Bind(req); err != nil {
 		return err
 	}
-	rows, err := h.db.Raw("EXEC InsertTr06 @HeadSerial = ?, @ItemSerial = ? , @Qnt = ? , @Price = ?", req.HeadSerial, req.ItemSerial, req.Qnt, req.Price).Rows()
+	rows, err := h.db.Raw("EXEC InsertTr06 @HeadSerial = ?, @ItemSerial = ? , @Qnt = ? , @Price = ? , @QntAntherUnit = ?", req.HeadSerial, req.ItemSerial, req.Qnt, req.Price, req.QntAntherUnit).Rows()
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
@@ -142,8 +153,6 @@ func (h *Handler) GetSalesOrderDocNo(c echo.Context) error {
 	if err := c.Bind(req); err != nil {
 		return err
 	}
-	fmt.Println("StoreCode")
-	fmt.Println(req.StoreCode)
 	rows, err := h.db.Raw("EXEC GetSalesOrderDocNo @StoreCode = ?, @TrSerial = ?", req.StoreCode, 30).Rows()
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
@@ -171,7 +180,7 @@ func (h *Handler) GetOrderItems(c echo.Context) error {
 	defer rows.Close()
 	for rows.Next() {
 		var item model.OrderItem
-		err = rows.Scan(&item.Serial, &item.BarCode, &item.ItemName, &item.Qnt, &item.Price, &item.Total)
+		err = rows.Scan(&item.Serial, &item.BarCode, &item.ItemName, &item.Qnt, &item.QntAntherUnit, &item.Price, &item.Total)
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, err.Error())
 		}
@@ -201,7 +210,7 @@ func (h *Handler) GetItems(c echo.Context) error {
 	defer rows.Close()
 	for rows.Next() {
 		var item model.Item
-		err = rows.Scan(&item.Serial, &item.Name, &item.Code, &item.Price, &item.Qnt, &item.AnQnt, &item.LimitedQnt, &item.StopSale, &item.PMax, &item.PMin)
+		err = rows.Scan(&item.Serial, &item.Name, &item.Code, &item.Price, &item.Qnt, &item.AnQnt, &item.ItemHaveAntherUnit, &item.LimitedQnt, &item.StopSale, &item.PMax, &item.PMin, &item.AvrWeight)
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, err.Error())
 		}
@@ -236,8 +245,6 @@ func (h *Handler) UpdateItem(c echo.Context) error {
 
 func (h *Handler) ListOrders(c echo.Context) error {
 	rows, err := h.db.Raw("EXEC ListTr05").Rows()
-	id := c.Get("user")
-
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
@@ -245,14 +252,14 @@ func (h *Handler) ListOrders(c echo.Context) error {
 	defer rows.Close()
 	for rows.Next() {
 		var order model.Order
-		err = rows.Scan(&order.DocNo, &order.DocDate, &order.EmpCode, &order.TotalCash, &order.EmpName)
+		err = rows.Scan(&order.Serial, &order.DocNo, &order.DocDate, &order.EmpCode, &order.TotalCash, &order.EmpName, &order.CustomerName, &order.CustomerCode, &order.CustomerSerial)
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, err.Error())
 		}
 		orders = append(orders, order)
 	}
 
-	return c.JSON(http.StatusOK, id)
+	return c.JSON(http.StatusOK, orders)
 }
 
 func (h *Handler) UpdateOrderItem(c echo.Context) error {
@@ -328,7 +335,6 @@ func (h *Handler) Login(c echo.Context) error {
 	if err := c.Bind(req); err != nil {
 		return err
 	}
-	fmt.Println(req.EmpCode)
 
 	var employee model.Emp
 	rows, err := h.db.Raw("EXEC GetEmp @EmpCode = ?", req.EmpCode).Rows()
@@ -338,7 +344,7 @@ func (h *Handler) Login(c echo.Context) error {
 	defer rows.Close()
 	for rows.Next() {
 		var item model.Emp
-		err = rows.Scan(&item.EmpName, &item.EmpPassword, &item.EmpCode)
+		err = rows.Scan(&item.EmpName, &item.EmpPassword, &item.EmpCode, &item.SecLevel)
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, err.Error())
 		}
@@ -359,5 +365,27 @@ func (h *Handler) Login(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
 
-	return c.JSON(http.StatusOK, accessToken)
+	response := model.LoginResponse{accessToken, employee}
+
+	return c.JSON(http.StatusOK, response)
+}
+
+func (h *Handler) GetEmp(c echo.Context) error {
+	code := c.Get("empCode")
+	var employee model.Emp
+	rows, err := h.db.Raw("EXEC GetEmp @EmpCode = ?", code).Rows()
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, err.Error())
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var item model.Emp
+		err = rows.Scan(&item.EmpName, &item.EmpPassword, &item.EmpCode, &item.SecLevel)
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, err.Error())
+		}
+		employee = item
+	}
+
+	return c.JSON(http.StatusOK, employee)
 }

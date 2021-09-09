@@ -9,9 +9,10 @@ type Emp struct {
 	EmpName     string
 	EmpCode     uint32
 	EmpPassword string
+	SecLevel    int32
 }
 
 type LoginResponse struct {
-	token    string
-	employee Emp
+	Token    string
+	Employee Emp
 }

@@ -18,14 +18,16 @@ type SingleItem struct {
 }
 
 type Item struct {
-	Serial     int
-	Name       string
-	Code       string
-	AnQnt      float32
-	Qnt        float32
-	Price      float64
-	LimitedQnt bool
-	StopSale   bool
-	PMin       float64
-	PMax       float64
+	Serial             int
+	Name               string
+	Code               string
+	AnQnt              float32
+	ItemHaveAntherUnit bool
+	Qnt                float32
+	Price              float64
+	LimitedQnt         bool
+	StopSale           bool
+	PMin               float64
+	PMax               float64
+	AvrWeight          float64
 }

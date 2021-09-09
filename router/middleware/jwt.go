@@ -62,7 +62,8 @@ func JWTWithConfig(tokenMaker token.Maker, config JWTConfig) echo.MiddlewareFunc
 			if err != nil {
 				return c.JSON(http.StatusForbidden, NewError(ErrJWTInvalid))
 			}
-			c.Set("user", token)
+			c.Set("employee", token)
+			c.Set("empCode", token.EmpCode)
 			return next(c)
 		}
 	}

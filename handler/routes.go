@@ -14,6 +14,7 @@ func (h *Handler) Register(v1 *echo.Group) {
 
 	v1.POST("/login", h.Login)
 	auth := v1.Group("/", jwtMiddleware)
+	auth.GET("employee", h.GetEmp)
 	//item
 	v1.GET("/items", h.GetItems)
 	v1.GET("/item", h.GetItem)
@@ -21,7 +22,7 @@ func (h *Handler) Register(v1 *echo.Group) {
 
 	// order
 	auth.GET("orders", h.ListOrders)
-	auth.POST("/orders", h.InsertOrder)
+	auth.POST("orders", h.InsertOrder)
 	v1.GET("/orders/no", h.GetSalesOrderDocNo)
 	v1.POST("/orders/close", h.CloseOrder)
 	v1.POST("/orders/item", h.InsertOrderItem)
