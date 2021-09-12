@@ -35,7 +35,10 @@ type OrderItem struct {
 	Total         float64
 	QntAntherUnit float64
 }
-
+type GetOrderItemsResonse struct {
+	Items  []OrderItem
+	Totals OrderTotals
+}
 type InsertOrderItem struct {
 	HeadSerial    int
 	ItemSerial    int

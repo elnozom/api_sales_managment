@@ -187,7 +187,24 @@ func (h *Handler) GetOrderItems(c echo.Context) error {
 		items = append(items, item)
 	}
 
-	return c.JSON(http.StatusOK, items)
+	totalsRows, err := h.db.Raw("EXEC StkTr06CalculateTotals @HeadSerial = ?", req.Serial).Rows()
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, err.Error())
+	}
+	defer totalsRows.Close()
+	var totals model.OrderTotals
+	for totalsRows.Next() {
+		err = totalsRows.Scan(&totals.TotalPackages, &totals.TotalCash)
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, err.Error())
+		}
+	}
+	response := model.GetOrderItemsResonse{
+		Items:  items,
+		Totals: totals,
+	}
+
+	return c.JSON(http.StatusOK, response)
 }
 
 func (h *Handler) GetItems(c echo.Context) error {
@@ -266,13 +283,14 @@ func (h *Handler) UpdateOrderItem(c echo.Context) error {
 	type Req struct {
 		Serial int
 		Qnt    float64
+		Price  float64
 	}
 
 	req := new(Req)
 	if err := c.Bind(req); err != nil {
 		return err
 	}
-	rows, err := h.db.Raw("EXEC UpdateTr06  @Serial = ? , @Qnt = ? ", req.Serial, req.Qnt).Rows()
+	rows, err := h.db.Raw("EXEC UpdateTr06  @Serial = ? , @Price = ? , @Qnt = ? ", req.Serial, req.Price, req.Qnt).Rows()
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
