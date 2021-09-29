@@ -10,6 +10,7 @@ type Order struct {
 	CustomerName   string
 	CustomerCode   int
 	CustomerSerial int
+	Reserved       bool
 }
 type OrderTotals struct {
 	TotalCash     float64
@@ -32,6 +33,8 @@ type OrderItem struct {
 	ItemName      string
 	Qnt           float64
 	Price         float64
+	PriceMin      float64
+	PriceMax      float64
 	Total         float64
 	QntAntherUnit float64
 }
@@ -45,4 +48,7 @@ type InsertOrderItem struct {
 	Qnt           float64
 	Price         float64
 	QntAntherUnit float64
+	PriceMax      float64
+	PriceMin      float64
+	MinorPerMajor int
 }

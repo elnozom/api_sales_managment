@@ -1,7 +1,7 @@
 package model
 
 type LoginReq struct {
-	EmpCode     uint32 `json:"EmpCode" validate:"required"`
+	EmpCode     string `json:"EmpCode" validate:"required"`
 	EmpPassword string `json:"EmpPassword" validate:"required"`
 }
 

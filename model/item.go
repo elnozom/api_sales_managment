@@ -30,4 +30,5 @@ type Item struct {
 	PMin               float64
 	PMax               float64
 	AvrWeight          float64
+	MinorPerMajor      int
 }

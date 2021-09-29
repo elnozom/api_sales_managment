@@ -22,6 +22,7 @@ func (h *Handler) Register(v1 *echo.Group) {
 
 	// order
 	auth.GET("orders", h.ListOrders)
+	auth.POST("orders/exit", h.ExitOrder)
 	auth.POST("orders", h.InsertOrder)
 	v1.GET("/orders/no", h.GetSalesOrderDocNo)
 	v1.POST("/orders/close", h.CloseOrder)
