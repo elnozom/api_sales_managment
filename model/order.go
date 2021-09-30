@@ -2,6 +2,7 @@ package model
 
 type Order struct {
 	Serial         int
+	StkTr01Serial  int
 	DocNo          int
 	DocDate        string
 	EmpCode        int

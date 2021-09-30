@@ -261,16 +261,17 @@ func (h *Handler) UpdateItem(c echo.Context) error {
 	return c.JSON(http.StatusOK, "updated")
 }
 
-func (h *Handler) ExitOrder(c echo.Context) error {
+func (h *Handler) UpdateReserved(c echo.Context) error {
 	type Req struct {
-		Serial int
+		Serial   int
+		Reserved bool
 	}
 
 	req := new(Req)
 	if err := c.Bind(req); err != nil {
 		return err
 	}
-	rows, err := h.db.Raw("EXEC StkTr05Exit  @Serial = ?", req.Serial).Rows()
+	rows, err := h.db.Raw("EXEC StkTr05Update  @Serial = ? ,@Reserved = ? ", req.Serial, req.Reserved).Rows()
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
@@ -288,7 +289,7 @@ func (h *Handler) ListOrders(c echo.Context) error {
 	defer rows.Close()
 	for rows.Next() {
 		var order model.Order
-		err = rows.Scan(&order.Serial, &order.DocNo, &order.DocDate, &order.EmpCode, &order.TotalCash, &order.EmpName, &order.CustomerName, &order.CustomerCode, &order.CustomerSerial, &order.Reserved)
+		err = rows.Scan(&order.Serial, &order.StkTr01Serial, &order.DocNo, &order.DocDate, &order.EmpCode, &order.TotalCash, &order.EmpName, &order.CustomerName, &order.CustomerCode, &order.CustomerSerial, &order.Reserved)
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, err.Error())
 		}
@@ -328,13 +329,14 @@ func (h *Handler) CloseOrder(c echo.Context) error {
 		Serial    int
 		TotalCash float64
 	}
-
+	code := c.Get("empCode")
+	fmt.Println(code)
 	req := new(Req)
 	if err := c.Bind(req); err != nil {
 		return err
 	}
 
-	_, err := h.db.Raw("EXEC CloseTr05  @Serial = ? ", req.Serial).Rows()
+	_, err := h.db.Raw("EXEC StkTr05Update  @Serial = ? ,@UpdateTotalCash = ? , @AuditCode = ?", req.Serial, 1, code).Rows()
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
