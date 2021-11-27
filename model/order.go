@@ -38,6 +38,7 @@ type OrderItem struct {
 	PriceMax      float64
 	Total         float64
 	QntAntherUnit float64
+	AvgWeight     float64
 }
 type GetOrderItemsResonse struct {
 	Items  []OrderItem
@@ -52,4 +53,9 @@ type InsertOrderItem struct {
 	PriceMax      float64
 	PriceMin      float64
 	MinorPerMajor int
+}
+
+type InsertOrderResp struct {
+	Serial int
+	No     int
 }

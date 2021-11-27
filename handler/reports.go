@@ -5,11 +5,43 @@ import (
 	"hand_held/model"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/labstack/echo/v4"
 )
 
+func (h *Handler) GetItemBalance(c echo.Context) error {
+	type Resp struct {
+		Raseed    float64
+		AnRaseed  float64
+		StoreCode float64
+		StoreName string
+	}
+
+	var resp []Resp
+	rows, err := h.db.Raw("EXEC GetItemBalance @ItemSerial = ?", c.Param("serial")).Rows()
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, err.Error())
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var rec Resp
+		rows.Scan(&rec.Raseed, &rec.AnRaseed, &rec.StoreCode, &rec.StoreName)
+		resp = append(resp, rec)
+	}
+
+	return c.JSON(http.StatusOK, resp)
+}
+func (h *Handler) UpdateReservedForEmp(c echo.Context) error {
+	code := c.Get("empCode")
+	rows, err := h.db.Raw("EXEC StkTr05UpdateUnReserveEmpDocs  @EmpCode = ? ", code).Rows()
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, err.Error())
+	}
+	defer rows.Close()
+	return c.JSON(http.StatusOK, "exited")
+}
 func (h *Handler) GetStores(c echo.Context) error {
 	var stores []model.Store
 	// return c.JSON(http.StatusOK, "test")
@@ -80,7 +112,10 @@ func (h *Handler) InsertOrder(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
-	return c.JSON(http.StatusOK, serial)
+	var resp = new(model.InsertOrderResp)
+	resp.Serial = serial
+	resp.No = int(orderNo)
+	return c.JSON(http.StatusOK, resp)
 }
 
 func (h *Handler) InsertOrderItem(c echo.Context) error {
@@ -181,7 +216,7 @@ func (h *Handler) GetOrderItems(c echo.Context) error {
 	defer rows.Close()
 	for rows.Next() {
 		var item model.OrderItem
-		err = rows.Scan(&item.Serial, &item.BarCode, &item.ItemName, &item.Qnt, &item.QntAntherUnit, &item.Price, &item.PriceMax, &item.PriceMin, &item.Total)
+		err = rows.Scan(&item.Serial, &item.BarCode, &item.ItemName, &item.Qnt, &item.QntAntherUnit, &item.AvgWeight, &item.Price, &item.PriceMax, &item.PriceMin, &item.Total)
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, err.Error())
 		}
@@ -293,6 +328,8 @@ func (h *Handler) ListOrders(c echo.Context) error {
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, err.Error())
 		}
+		order.DocDate = strings.Replace(order.DocDate, "T", " ", 1)
+		order.DocDate = strings.Replace(order.DocDate, "Z", " ", 1)
 		orders = append(orders, order)
 	}
 
@@ -398,6 +435,7 @@ func (h *Handler) Login(c echo.Context) error {
 		return c.JSON(http.StatusBadGateway, "incorrect_empcode")
 
 	}
+	fmt.Println(employee.EmpPassword)
 	if employee.EmpPassword != req.EmpPassword {
 		return c.JSON(http.StatusBadGateway, "incorrect_password")
 
@@ -411,7 +449,6 @@ func (h *Handler) Login(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
-
 	response := model.LoginResponse{accessToken, employee}
 
 	return c.JSON(http.StatusOK, response)

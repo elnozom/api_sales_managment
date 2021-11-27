@@ -17,9 +17,11 @@ func (h *Handler) Register(v1 *echo.Group) {
 	//item
 	auth.GET("items", h.GetItems)
 	auth.GET("item", h.GetItem)
+	auth.GET("item/balnace/:serial", h.GetItemBalance)
 	auth.PUT("item/update", h.UpdateItem)
 
 	// order
+	auth.PUT("unreserve", h.UpdateReservedForEmp, jwtMiddleware)
 	auth.GET("orders", h.ListOrders)
 	auth.POST("orders/reserve", h.UpdateReserved)
 	auth.POST("orders", h.InsertOrder)
