@@ -36,9 +36,12 @@ type OrderItem struct {
 	Price         float64
 	PriceMin      float64
 	PriceMax      float64
+	ItemSerial    int
 	Total         float64
 	QntAntherUnit float64
 	AvgWeight     float64
+	StoreCode     int
+	StoreName     string
 }
 type GetOrderItemsResonse struct {
 	Items  []OrderItem
@@ -47,6 +50,7 @@ type GetOrderItemsResonse struct {
 type InsertOrderItem struct {
 	HeadSerial    int
 	ItemSerial    int
+	Branch        int
 	Qnt           float64
 	Price         float64
 	QntAntherUnit float64

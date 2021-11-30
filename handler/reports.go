@@ -13,21 +13,31 @@ import (
 
 func (h *Handler) GetItemBalance(c echo.Context) error {
 	type Resp struct {
-		Raseed    float64
-		AnRaseed  float64
-		StoreCode float64
-		StoreName string
+		Raseed           float64
+		RaseedReserved   float64
+		RaseedNet        float64
+		AnRaseed         float64
+		AnRaseedReserved float64
+		AnRaseedNet      float64
+		StoreCode        float64
+		StoreName        string
 	}
-
+	var qnt int64
+	if c.FormValue("qnt") != "" {
+		qnt, _ = strconv.ParseInt(c.FormValue("qnt"), 0, 64)
+	}
+	fmt.Println(qnt)
 	var resp []Resp
-	rows, err := h.db.Raw("EXEC GetItemBalance @ItemSerial = ?", c.Param("serial")).Rows()
+	rows, err := h.db.Raw("EXEC GetItemBalance @ItemSerial = ? , @Qnt = ?", c.Param("serial"), qnt).Rows()
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
 	defer rows.Close()
 	for rows.Next() {
 		var rec Resp
-		rows.Scan(&rec.Raseed, &rec.AnRaseed, &rec.StoreCode, &rec.StoreName)
+		rows.Scan(&rec.Raseed, &rec.RaseedReserved, &rec.AnRaseed, &rec.AnRaseedReserved, &rec.StoreCode, &rec.StoreName)
+		rec.RaseedNet = rec.Raseed - rec.RaseedReserved
+		rec.AnRaseedNet = rec.AnRaseed - rec.AnRaseedReserved
 		resp = append(resp, rec)
 	}
 
@@ -119,13 +129,11 @@ func (h *Handler) InsertOrder(c echo.Context) error {
 }
 
 func (h *Handler) InsertOrderItem(c echo.Context) error {
-
 	req := new(model.InsertOrderItem)
 	if err := c.Bind(req); err != nil {
 		return err
 	}
-
-	rows, err := h.db.Raw("EXEC InsertTr06 @HeadSerial = ?, @ItemSerial = ? , @Qnt = ? , @Price = ? , @QntAntherUnit = ? , @PriceMax = ? , @PriceMin = ? , @MinorPerMajor = ? ", req.HeadSerial, req.ItemSerial, req.Qnt, req.Price, req.QntAntherUnit, req.PriceMax, req.PriceMin, req.MinorPerMajor).Rows()
+	rows, err := h.db.Raw("EXEC InsertTr06 @HeadSerial = ?, @ItemSerial = ? , @Qnt = ? , @Price = ? , @QntAntherUnit = ? , @PriceMax = ? , @PriceMin = ? , @MinorPerMajor = ? , @Branch = ?", req.HeadSerial, req.ItemSerial, req.Qnt, req.Price, req.QntAntherUnit, req.PriceMax, req.PriceMin, req.MinorPerMajor, req.Branch).Rows()
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
@@ -216,7 +224,7 @@ func (h *Handler) GetOrderItems(c echo.Context) error {
 	defer rows.Close()
 	for rows.Next() {
 		var item model.OrderItem
-		err = rows.Scan(&item.Serial, &item.BarCode, &item.ItemName, &item.Qnt, &item.QntAntherUnit, &item.AvgWeight, &item.Price, &item.PriceMax, &item.PriceMin, &item.Total)
+		err = rows.Scan(&item.Serial, &item.BarCode, &item.ItemName, &item.ItemSerial, &item.Qnt, &item.QntAntherUnit, &item.AvgWeight, &item.Price, &item.PriceMax, &item.PriceMin, &item.Total, &item.StoreCode, &item.StoreName)
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, err.Error())
 		}
@@ -280,6 +288,7 @@ func (h *Handler) UpdateItem(c echo.Context) error {
 		MinValue *float64
 		MaxValue *float64
 		Serial   *int
+		Branch   *int
 	}
 
 	req := new(Req)
@@ -341,13 +350,14 @@ func (h *Handler) UpdateOrderItem(c echo.Context) error {
 		Serial int
 		Qnt    float64
 		Price  float64
+		Branch int
 	}
 
 	req := new(Req)
 	if err := c.Bind(req); err != nil {
 		return err
 	}
-	rows, err := h.db.Raw("EXEC UpdateTr06  @Serial = ? , @Price = ? , @Qnt = ? ", req.Serial, req.Price, req.Qnt).Rows()
+	rows, err := h.db.Raw("EXEC UpdateTr06  @Serial = ? , @Price = ? , @Qnt = ? , @Branch = ? ", req.Serial, req.Price, req.Qnt, req.Branch).Rows()
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
