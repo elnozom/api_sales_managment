@@ -23,7 +23,12 @@ func (h *Handler) Register(v1 *echo.Group) {
 	// order
 	auth.PUT("unreserve", h.UpdateReservedForEmp, jwtMiddleware)
 	auth.GET("orders", h.ListOrders)
-	auth.POST("orders/reserve", h.UpdateReserved)
+	auth.GET("orders/store", h.ListStoreOrders, jwtMiddleware)
+	auth.GET("orders/store/:Serial", h.ListStoreOrderItems, jwtMiddleware)
+	auth.PUT("orders/store/update", h.UpdateStoreOrderItems, jwtMiddleware)
+	auth.PUT("orders/store/close/:serial", h.CloseStoreOrderItems, jwtMiddleware)
+
+	auth.PUT("orders/update/:Serial", h.UpdateOrder)
 	auth.POST("orders", h.InsertOrder)
 	auth.GET("orders/no", h.GetSalesOrderDocNo)
 	auth.POST("orders/close", h.CloseOrder)

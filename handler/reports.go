@@ -21,6 +21,7 @@ func (h *Handler) GetItemBalance(c echo.Context) error {
 		AnRaseedNet      float64
 		StoreCode        float64
 		StoreName        string
+		DsiplayName      string
 	}
 	var qnt int64
 	if c.FormValue("qnt") != "" {
@@ -35,7 +36,7 @@ func (h *Handler) GetItemBalance(c echo.Context) error {
 	defer rows.Close()
 	for rows.Next() {
 		var rec Resp
-		rows.Scan(&rec.Raseed, &rec.RaseedReserved, &rec.AnRaseed, &rec.AnRaseedReserved, &rec.StoreCode, &rec.StoreName)
+		rows.Scan(&rec.Raseed, &rec.RaseedReserved, &rec.AnRaseed, &rec.AnRaseedReserved, &rec.StoreCode, &rec.StoreName, &rec.DsiplayName)
 		rec.RaseedNet = rec.Raseed - rec.RaseedReserved
 		rec.AnRaseedNet = rec.AnRaseed - rec.AnRaseedReserved
 		resp = append(resp, rec)
@@ -283,7 +284,7 @@ func (h *Handler) GetItems(c echo.Context) error {
 
 func (h *Handler) UpdateItem(c echo.Context) error {
 	type Req struct {
-		LQvalue  *bool
+		LQvalue  *float64
 		STValue  *bool
 		MinValue *float64
 		MaxValue *float64
@@ -305,17 +306,19 @@ func (h *Handler) UpdateItem(c echo.Context) error {
 	return c.JSON(http.StatusOK, "updated")
 }
 
-func (h *Handler) UpdateReserved(c echo.Context) error {
+func (h *Handler) UpdateOrder(c echo.Context) error {
 	type Req struct {
-		Serial   int
-		Reserved bool
+		Reserved    *bool
+		AuditCode   *int
+		DeliveryFee float64
+		DriverName  *string
 	}
 
 	req := new(Req)
 	if err := c.Bind(req); err != nil {
 		return err
 	}
-	rows, err := h.db.Raw("EXEC StkTr05Update  @Serial = ? ,@Reserved = ? ", req.Serial, req.Reserved).Rows()
+	rows, err := h.db.Raw("EXEC StkTr05Update  @Serial = ? ,@Reserved = ?,@AuditCode =? ,@DeliveryFee =? , @DriverName = ?", c.Param("Serial"), req.Reserved, req.AuditCode, req.DeliveryFee, req.DriverName).Rows()
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
@@ -333,7 +336,7 @@ func (h *Handler) ListOrders(c echo.Context) error {
 	defer rows.Close()
 	for rows.Next() {
 		var order model.Order
-		err = rows.Scan(&order.Serial, &order.StkTr01Serial, &order.DocNo, &order.DocDate, &order.EmpCode, &order.TotalCash, &order.EmpName, &order.CustomerName, &order.CustomerCode, &order.CustomerSerial, &order.Reserved)
+		err = rows.Scan(&order.Serial, &order.StkTr01Serial, &order.DocNo, &order.DocDate, &order.EmpCode, &order.TotalCash, &order.EmpName, &order.CustomerName, &order.CustomerCode, &order.CustomerSerial, &order.Reserved, &order.DriverName, &order.DeliveryFee)
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, err.Error())
 		}
@@ -343,6 +346,80 @@ func (h *Handler) ListOrders(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, orders)
+}
+
+func (h *Handler) ListStoreOrders(c echo.Context) error {
+	code := c.Get("empCode")
+	var employee model.Emp
+	err := h.db.Raw("EXEC GetEmp @EmpCode = ?", code).Row().Scan(
+		&employee.EmpName, &employee.EmpPassword, &employee.EmpCode, &employee.SecLevel, &employee.FixEmpStore)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, err.Error())
+	}
+	rows, err := h.db.Raw("EXEC STCOrderList @StoreCode = ? ", employee.FixEmpStore+1).Rows()
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, err.Error())
+	}
+	var orders []model.Order
+	defer rows.Close()
+	for rows.Next() {
+		var order model.Order
+		err = rows.Scan(&order.Serial, &order.DocNo, &order.DocDate, &order.StoreName, &order.TotalCash, &order.DriverName, &order.DeliveryFee, &order.CustomerName, &order.CustomerCode, &order.EmpName)
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, err.Error())
+		}
+		order.DocDate = strings.Replace(order.DocDate, "T", " ", 1)
+		order.DocDate = strings.Replace(order.DocDate, "Z", " ", 1)
+		orders = append(orders, order)
+	}
+
+	return c.JSON(http.StatusOK, orders)
+}
+
+func (h *Handler) ListStoreOrderItems(c echo.Context) error {
+	rows, err := h.db.Raw("EXEC STCDetailsList @Serial = ? ", c.Param("Serial")).Rows()
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, err.Error())
+	}
+	var orders []model.OrderItem
+	defer rows.Close()
+	for rows.Next() {
+		var order model.OrderItem
+		err = rows.Scan(&order.Serial, &order.BarCode, &order.ItemName, &order.ItemSerial, &order.Qnt, &order.QntAntherUnit, &order.AvgWeight, &order.Price, &order.Total)
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, err.Error())
+		}
+		orders = append(orders, order)
+	}
+
+	return c.JSON(http.StatusOK, orders)
+}
+
+func (h *Handler) CloseStoreOrderItems(c echo.Context) error {
+
+	var resp int
+	err := h.db.Raw("EXEC STCOrdersClose @Serial = ?", c.Param("serial")).Row().Scan(&resp)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, err.Error())
+	}
+	return c.JSON(http.StatusOK, resp)
+}
+func (h *Handler) UpdateStoreOrderItems(c echo.Context) error {
+	type Req struct {
+		Serial int
+		Qnt    float64
+	}
+
+	req := new(Req)
+	var resp int
+	if err := c.Bind(req); err != nil {
+		return err
+	}
+	err := h.db.Raw("EXEC STCDetailsUpdate @Serial = ? , @Qnt = ? ", req.Serial, req.Qnt).Row().Scan(&resp)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, err.Error())
+	}
+	return c.JSON(http.StatusOK, resp)
 }
 
 func (h *Handler) UpdateOrderItem(c echo.Context) error {
@@ -373,11 +450,10 @@ func (h *Handler) UpdateOrderItem(c echo.Context) error {
 }
 func (h *Handler) CloseOrder(c echo.Context) error {
 	type Req struct {
-		Serial    int
-		TotalCash float64
+		Serial int
+		DocNo  int
 	}
 	code := c.Get("empCode")
-	fmt.Println(code)
 	req := new(Req)
 	if err := c.Bind(req); err != nil {
 		return err
@@ -387,7 +463,50 @@ func (h *Handler) CloseOrder(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
-	return c.JSON(http.StatusOK, "closed")
+	_, err = h.db.Raw("EXEC StcOrdersInsert  @HeadSerial = ?", req.Serial).Rows()
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, err.Error())
+	}
+
+	rows, err := h.db.Raw("EXEC STCOrderList @HeadNo = ? ", req.DocNo).Rows()
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, err.Error())
+	}
+	var orders []model.Order
+	var details [][]model.OrderItem
+	defer rows.Close()
+	for rows.Next() {
+		var d []model.OrderItem
+		var order model.Order
+		err = rows.Scan(&order.Serial, &order.DocNo, &order.DocDate, &order.StoreName, &order.TotalCash, &order.DriverName, &order.DeliveryFee, &order.CustomerName, &order.CustomerCode, &order.EmpName, &order.SalesOrderNo)
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, err.Error())
+		}
+		order.DocDate = strings.Replace(order.DocDate, "T", " ", 1)
+		order.DocDate = strings.Replace(order.DocDate, "Z", " ", 1)
+		orders = append(orders, order)
+
+		// get items fior current head
+
+		detailsRows, err := h.db.Raw("EXEC STCDetailsList @Serial = ? ", order.Serial).Rows()
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, err.Error())
+		}
+		defer rows.Close()
+		for detailsRows.Next() {
+			var item model.OrderItem
+			err = detailsRows.Scan(&item.Serial, &item.BarCode, &item.ItemName, &item.ItemSerial, &item.Qnt, &item.QntAntherUnit, &item.AvgWeight, &item.Price, &item.Total)
+			if err != nil {
+				return c.JSON(http.StatusInternalServerError, err.Error())
+			}
+			item.StoreName = order.StoreName
+			d = append(d, item)
+		}
+
+		details = append(details, d)
+
+	}
+	return c.JSON(http.StatusOK, details)
 }
 
 func (h *Handler) DeleteOrderItem(c echo.Context) error {
@@ -434,7 +553,7 @@ func (h *Handler) Login(c echo.Context) error {
 	defer rows.Close()
 	for rows.Next() {
 		var item model.Emp
-		err = rows.Scan(&item.EmpName, &item.EmpPassword, &item.EmpCode, &item.SecLevel)
+		err = rows.Scan(&item.EmpName, &item.EmpPassword, &item.EmpCode, &item.SecLevel, &item.FixEmpStore)
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, err.Error())
 		}
@@ -453,7 +572,7 @@ func (h *Handler) Login(c echo.Context) error {
 
 	accessToken, err := h.tokenMaker.CreateToken(
 		uint32(code),
-		time.Duration(999999999999999999),
+		time.Duration(99*1000000000000),
 	)
 
 	if err != nil {
@@ -474,7 +593,7 @@ func (h *Handler) GetEmp(c echo.Context) error {
 	defer rows.Close()
 	for rows.Next() {
 		var item model.Emp
-		err = rows.Scan(&item.EmpName, &item.EmpPassword, &item.EmpCode, &item.SecLevel)
+		err = rows.Scan(&item.EmpName, &item.EmpPassword, &item.EmpCode, &item.SecLevel, &item.FixEmpStore)
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, err.Error())
 		}

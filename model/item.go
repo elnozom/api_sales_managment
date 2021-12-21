@@ -25,7 +25,7 @@ type Item struct {
 	ItemHaveAntherUnit bool
 	Qnt                float32
 	Price              float64
-	LimitedQnt         bool
+	LimitedQnt         float64
 	StopSale           bool
 	PMin               float64
 	PMax               float64

@@ -22,6 +22,7 @@ func InitDatabase() error {
 		fmt.Println("Failed to connect to external database")
 		panic(err)
 	}
+	DBConn.LogMode(true)
 	fmt.Println("Connection Opened to External Database")
 	return nil
 

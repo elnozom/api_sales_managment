@@ -10,6 +10,7 @@ type Emp struct {
 	EmpCode     uint32
 	EmpPassword string
 	SecLevel    int32
+	FixEmpStore int32
 }
 
 type LoginResponse struct {

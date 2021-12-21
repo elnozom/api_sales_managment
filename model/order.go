@@ -6,12 +6,16 @@ type Order struct {
 	DocNo          int
 	DocDate        string
 	EmpCode        int
+	DeliveryFee    float64
+	DriverName     string
+	StoreName      string
 	TotalCash      float64
 	EmpName        string
 	CustomerName   string
 	CustomerCode   int
 	CustomerSerial int
 	Reserved       bool
+	SalesOrderNo   int
 }
 type OrderTotals struct {
 	TotalCash     float64
