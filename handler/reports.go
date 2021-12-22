@@ -336,7 +336,7 @@ func (h *Handler) ListOrders(c echo.Context) error {
 	defer rows.Close()
 	for rows.Next() {
 		var order model.Order
-		err = rows.Scan(&order.Serial, &order.StkTr01Serial, &order.DocNo, &order.DocDate, &order.EmpCode, &order.TotalCash, &order.EmpName, &order.CustomerName, &order.CustomerCode, &order.CustomerSerial, &order.Reserved, &order.DriverName, &order.DeliveryFee)
+		err = rows.Scan(&order.Serial, &order.StkTr01Serial, &order.DocNo, &order.DocDate, &order.EmpCode, &order.TotalCash, &order.EmpName, &order.CustomerName, &order.CustomerCode, &order.CustomerSerial, &order.Reserved, &order.DriverName, &order.DeliveryFee, &order.Finished)
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, err.Error())
 		}
@@ -356,7 +356,7 @@ func (h *Handler) ListStoreOrders(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
-	rows, err := h.db.Raw("EXEC STCOrderList @StoreCode = ? ", employee.FixEmpStore+1).Rows()
+	rows, err := h.db.Raw("EXEC STCOrderList @StoreCode = ? ", employee.FixEmpStore).Rows()
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
@@ -364,7 +364,7 @@ func (h *Handler) ListStoreOrders(c echo.Context) error {
 	defer rows.Close()
 	for rows.Next() {
 		var order model.Order
-		err = rows.Scan(&order.Serial, &order.DocNo, &order.DocDate, &order.StoreName, &order.TotalCash, &order.DriverName, &order.DeliveryFee, &order.CustomerName, &order.CustomerCode, &order.EmpName)
+		err = rows.Scan(&order.Serial, &order.DocNo, &order.DocDate, &order.StoreName, &order.TotalCash, &order.DriverName, &order.DeliveryFee, &order.CustomerName, &order.CustomerCode, &order.EmpName, &order.SalesOrderNo, &order.Finished)
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, err.Error())
 		}

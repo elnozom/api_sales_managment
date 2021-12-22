@@ -15,6 +15,7 @@ type Order struct {
 	CustomerCode   int
 	CustomerSerial int
 	Reserved       bool
+	Finished       bool
 	SalesOrderNo   int
 }
 type OrderTotals struct {
