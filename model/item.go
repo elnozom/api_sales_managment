@@ -32,3 +32,16 @@ type Item struct {
 	AvrWeight          float64
 	MinorPerMajor      int
 }
+
+type IetmBalance struct {
+	Raseed           float64
+	ItemName         string
+	RaseedReserved   float64
+	RaseedNet        float64
+	AnRaseed         float64
+	AnRaseedReserved float64
+	AnRaseedNet      float64
+	StoreCode        float64
+	StoreName        string
+	DsiplayName      string
+}

@@ -18,6 +18,7 @@ func (h *Handler) Register(v1 *echo.Group) {
 	auth.GET("items", h.GetItems)
 	auth.GET("item", h.GetItem)
 	auth.GET("item/balnace/:serial", h.GetItemBalance)
+	auth.GET("item/balnace", h.StockRpt)
 	auth.PUT("item/update", h.UpdateItem)
 
 	// order
@@ -26,7 +27,7 @@ func (h *Handler) Register(v1 *echo.Group) {
 	auth.GET("orders/store", h.ListStoreOrders, jwtMiddleware)
 	auth.GET("orders/store/:Serial", h.ListStoreOrderItems, jwtMiddleware)
 	auth.PUT("orders/store/update", h.UpdateStoreOrderItems, jwtMiddleware)
-	auth.PUT("orders/store/close/:serial", h.CloseStoreOrderItems, jwtMiddleware)
+	auth.PUT("orders/store/close/:serial/:emp", h.CloseStoreOrderItems, jwtMiddleware)
 
 	auth.PUT("orders/update/:Serial", h.UpdateOrder)
 	auth.POST("orders", h.InsertOrder)

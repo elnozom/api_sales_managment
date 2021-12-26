@@ -5,6 +5,7 @@ type Order struct {
 	StkTr01Serial  int
 	DocNo          int
 	DocDate        string
+	StcEmpName     string
 	EmpCode        int
 	DeliveryFee    float64
 	DriverName     string
@@ -34,19 +35,20 @@ type GetOrderItemsRequest struct {
 }
 
 type OrderItem struct {
-	Serial        int
-	BarCode       int
-	ItemName      string
-	Qnt           float64
-	Price         float64
-	PriceMin      float64
-	PriceMax      float64
-	ItemSerial    int
-	Total         float64
-	QntAntherUnit float64
-	AvgWeight     float64
-	StoreCode     int
-	StoreName     string
+	Serial             int
+	ItemHaveAntherUnit bool
+	BarCode            int
+	ItemName           string
+	Qnt                float64
+	Price              float64
+	PriceMin           float64
+	PriceMax           float64
+	ItemSerial         int
+	Total              float64
+	QntAntherUnit      float64
+	AvgWeight          float64
+	StoreCode          int
+	StoreName          string
 }
 type GetOrderItemsResonse struct {
 	Items  []OrderItem
