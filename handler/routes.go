@@ -31,6 +31,17 @@ func (h *Handler) Register(v1 *echo.Group) {
 
 	auth.PUT("orders/update/:Serial", h.UpdateOrder)
 	auth.POST("orders", h.InsertOrder)
+	auth.GET("invoice", h.ListInvoiceOrders)
+	auth.GET("invoice/:serial", h.ListInvoiceItems)
+	auth.POST("invoice", h.InsertInvoiceOrder)
+	auth.POST("invoice/item", h.InsertInvoiceOrderItem)
+	auth.DELETE("invoice/item/:serial", h.DeleteInvoiceOrderItem)
+	auth.PUT("invoice/update/:serial", h.UpdateInvoiceOrder)
+	auth.PUT("invoice/item/update", h.UpdateInvoiceOrderItem)
+	auth.POST("invoice/close", h.CloseInvoiceOrder)
+	auth.GET("invoice/no", h.InvoiceOrderDocNo)
+	auth.GET("invoice/options", h.PosOptionsRead)
+
 	auth.GET("orders/no", h.GetSalesOrderDocNo)
 	auth.POST("orders/close", h.CloseOrder)
 	auth.POST("orders/item", h.InsertOrderItem)

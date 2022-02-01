@@ -54,7 +54,7 @@ func (h *Handler) GetItemBalance(c echo.Context) error {
 }
 func (h *Handler) UpdateReservedForEmp(c echo.Context) error {
 	code := c.Get("empCode")
-	rows, err := h.db.Raw("EXEC StkTr05UpdateUnReserveEmpDocs  @EmpCode = ? ", code).Rows()
+	rows, err := h.db.Raw("EXEC UnReserveEmpDocs  @EmpCode = ? ", code).Rows()
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
