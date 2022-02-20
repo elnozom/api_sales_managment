@@ -37,7 +37,7 @@ type GetOrderItemsRequest struct {
 type OrderItem struct {
 	Serial             int
 	ItemHaveAntherUnit bool
-	BarCode            int
+	BarCode            string
 	ItemName           string
 	Qnt                float64
 	Price              float64
