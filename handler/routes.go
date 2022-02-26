@@ -32,6 +32,7 @@ func (h *Handler) Register(v1 *echo.Group) {
 	auth.PUT("orders/update/:Serial", h.UpdateOrder)
 	auth.POST("orders", h.InsertOrder)
 	auth.GET("invoice", h.ListInvoiceOrders)
+	auth.DELETE("invoice/:serial", h.DeleteInvoiceOrder)
 	auth.GET("invoice/:serial", h.ListInvoiceItems)
 	auth.POST("invoice", h.InsertInvoiceOrder)
 	auth.POST("invoice/item", h.InsertInvoiceOrderItem)

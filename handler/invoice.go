@@ -95,16 +95,28 @@ func (h *Handler) InsertInvoiceOrderItem(c echo.Context) error {
 	return c.JSON(http.StatusOK, serial)
 }
 
+func (h *Handler) DeleteInvoiceOrder(c echo.Context) error {
+	rows, err := h.db.Raw("EXEC StkTrInvoiceHeadDelete  @Serial = ?", c.Param("serial")).Rows()
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, err.Error())
+	}
+	defer rows.Close()
+	return c.JSON(http.StatusOK, "deleted")
+}
 func (h *Handler) ListInvoiceOrders(c echo.Context) error {
 	code := c.Get("empCode")
 	type Req struct {
 		Finished bool
+		Deleted  *bool
+		DateFrom string
+		DateTo   string
 	}
+
 	req := new(Req)
 	if err := c.Bind(req); err != nil {
 		return err
 	}
-	rows, err := h.db.Raw("EXEC StkTrInvoiceHeadList @EmpCode = ? ,   @Finished = ? ", code, req.Finished).Rows()
+	rows, err := h.db.Raw("EXEC StkTrInvoiceHeadList @EmpCode = ? ,   @Finished = ? , @Deleted = ? , @DateFrom = ? , @DateTo = ? ", code, req.Finished, req.Deleted, req.DateFrom, req.DateTo).Rows()
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
@@ -112,7 +124,7 @@ func (h *Handler) ListInvoiceOrders(c echo.Context) error {
 	defer rows.Close()
 	for rows.Next() {
 		var order model.Order
-		err = rows.Scan(&order.Serial, &order.DocNo, &order.DocDate, &order.EmpCode, &order.TotalCash, &order.EmpName, &order.CustomerName, &order.CustomerCode, &order.CustomerSerial, &order.Reserved, &order.Finished)
+		err = rows.Scan(&order.Serial, &order.DocNo, &order.DocDate, &order.EmpCode, &order.TotalCash, &order.EmpName, &order.CustomerName, &order.CustomerCode, &order.CustomerSerial, &order.Reserved, &order.Finished, &order.Deleted)
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, err.Error())
 		}
