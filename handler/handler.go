@@ -2,8 +2,8 @@ package handler
 
 import (
 	"fmt"
-	"hand_held/config"
-	"hand_held/token"
+	"sms/config"
+	"sms/token"
 
 	"github.com/jinzhu/gorm"
 )

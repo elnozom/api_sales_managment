@@ -2,8 +2,8 @@ package handler
 
 import (
 	"fmt"
-	"hand_held/model"
 	"net/http"
+	"sms/model"
 	"strconv"
 	"strings"
 	"time"
@@ -61,6 +61,10 @@ func (h *Handler) UpdateReservedForEmp(c echo.Context) error {
 	defer rows.Close()
 	return c.JSON(http.StatusOK, "exited")
 }
+func (h *Handler) ValidateUser(c echo.Context) error {
+	return c.JSON(http.StatusOK, "valid")
+}
+
 func (h *Handler) GetStores(c echo.Context) error {
 	var stores []model.Store
 	// return c.JSON(http.StatusOK, "test")

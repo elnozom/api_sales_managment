@@ -32,7 +32,7 @@ StkTrInvoiceDetails d on h.Serial = d.HeadSerial
 		h.EmpCode = case when @seclevel < 4 then @Empcode else h.EmpCode end 
         AND h.DocDate <= case when @DateTo = '' THEN  h.DocDate ELSE  CONVERT(DATETIME, @DateTo, 102) END
         AND h.DocDate >= case when @DateFrom = '' THEN  h.DocDate ELSE  CONVERT(DATETIME, @DateFrom, 102) END
-        AND h.Deleted = case when @Deleted = NULL THEN  h.Deleted ELSE @Deleted  END
+        AND h.Deleted = case when @Deleted IS NULL THEN  h.Deleted ELSE @Deleted  END
 		AND h.IsPosted = @Finished
         
 group by HeadSerial ,DocNo,h.EmpCode,AccountSerial, h.Serial,DocDate,EmpName,AccountCode,AccountName, Reserved,IsPosted

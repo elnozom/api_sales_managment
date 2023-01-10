@@ -1,8 +1,8 @@
 package handler
 
 import (
-	"hand_held/model"
 	"net/http"
+	"sms/model"
 	"strings"
 
 	"github.com/labstack/echo/v4"

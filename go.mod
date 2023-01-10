@@ -1,4 +1,4 @@
-module hand_held
+module sms
 
 go 1.15
 

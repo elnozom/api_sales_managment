@@ -2,7 +2,7 @@ package db
 
 import (
 	"fmt"
-	"hand_held/config"
+	"sms/config"
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mssql"

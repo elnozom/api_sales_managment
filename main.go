@@ -1,9 +1,11 @@
 package main
 
 import (
-	"hand_held/db"
-	"hand_held/handler"
-	"hand_held/router"
+	"fmt"
+	"sms/config"
+	"sms/db"
+	"sms/handler"
+	"sms/router"
 )
 
 // @title Swagger Example API
@@ -35,5 +37,6 @@ func main() {
 
 	}
 	h.Register(v1)
-	r.Logger.Fatal(r.Start(":8586"))
+	port := fmt.Sprintf(":%s", config.Config("PORT"))
+	r.Logger.Fatal(r.Start(port))
 }

@@ -1,9 +1,9 @@
 package middleware
 
 import (
-	"hand_held/config"
-	"hand_held/token"
 	"net/http"
+	"sms/config"
+	"sms/token"
 
 	"github.com/labstack/echo/v4"
 )

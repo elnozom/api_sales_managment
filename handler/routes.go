@@ -1,8 +1,8 @@
 package handler
 
 import (
-	"hand_held/config"
-	"hand_held/router/middleware"
+	"sms/config"
+	"sms/router/middleware"
 
 	"github.com/labstack/echo/v4"
 )
@@ -10,6 +10,8 @@ import (
 func (h *Handler) Register(v1 *echo.Group) {
 	jwtMiddleware := middleware.JWT(config.Config("JWT_SECRET"))
 	auth := v1.Group("/", jwtMiddleware)
+
+	auth.POST("validate", h.ValidateUser)
 	auth.GET("stores", h.GetStores)
 	auth.GET("account", h.GetAccount)
 	v1.POST("/login", h.Login)
@@ -49,5 +51,9 @@ func (h *Handler) Register(v1 *echo.Group) {
 	auth.PUT("orders/item/update", h.UpdateOrderItem)
 	auth.POST("orders/item/delete", h.DeleteOrderItem)
 	auth.GET("orders/items", h.GetOrderItems)
+
+	// einvoice
+	auth.POST("eta/convert/:serial", h.ConvertToEta)
+	auth.GET("eta/orders", h.OrdersList)
 
 }
